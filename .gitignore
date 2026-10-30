@@ -1,0 +1,14 @@
+# SQLite databases (keep personal evidence vault local)
+*.db
+*.sqlite3
+
+# CSV Exports
+evidence_export_*.csv
+virgoyt_evidence_*.csv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
