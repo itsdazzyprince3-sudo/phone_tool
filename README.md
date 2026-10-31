@@ -1,10 +1,10 @@
-# 🎭 VirgoYT — OSINT Toolkit (v4.0 Upgrade)
+# 🎭 VirgoYT — OSINT Toolkit (v5.0 Full-Spectrum Upgrade)
 
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%2F%20Termux-orange.svg)](#)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%2F%20Termux%20%2F%20Linux-orange.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Developer](https://img.shields.io/badge/Developer-VIRGOYT707-red.svg)](#)
-[![Status](https://img.shields.io/badge/Status-PRIVACY--FOCUSED-brightgreen.svg)](#)
+[![Status](https://img.shields.io/badge/Status-FULL--SPECTRUM%20OSINT-red.svg)](#)
 
 A high-precision, privacy-focused telecommunication metadata analysis and evidence management application architected specifically for Android Termux and Linux environments.
 
@@ -66,28 +66,50 @@ Designed from the ground up by **VIRGOYT707**, v4.0 introduces modular architect
 
 ---
 
-## 🚀 Installation & Quick Start in Termux
+## 🚀 Installation — Termux / Linux PC
 
-Open your Termux terminal and execute the following commands:
+The same source tree runs on both. `setup.py` detects the platform and finishes the right setup.
+
+### Universal (auto-detect)
 
 ```bash
-# 1. Update Termux packages and install Python & Git
-pkg update -y && pkg install python git -y
-
-# 2. Clone the official repository
 git clone https://github.com/itsdazzyprince3-sudo/phone_tool.git
 cd phone_tool
-
-# 3. Install required library
-pip install -r requirements.txt
-
-# 4. Launch VirgoYT Toolkit
-python3 phone_tool.py
+python3 setup.py            # Termux: pip-installs + creates ~/phone_tool vault
+                            # Linux:  pip-installs + creates ~/.local/share/virgoyt vault
+numbertrackervy
 ```
+
+### Termux / Android
+
+```bash
+pkg update -y && pkg install python git -y
+pip install .
+numbertrackervy
+```
+
+### Linux PC (Debian / Ubuntu / Kali)
+
+```bash
+sudo apt update
+sudo apt install python3 python3-phonenumbers git
+pipx install .              # or: sudo python3 setup.py install
+numbertrackervy
+```
+
+### Debian package (.deb) — install with apt
+
+```bash
+python3 setup.py deb
+sudo apt install ./dist/numbertrackervy_4.0.0_all.deb
+numbertrackervy
+```
+
+The `.deb` declares `python3-phonenumbers`, so apt pulls the dependency. Package name is lowercase: `numbertrackervy`.
 
 To run the standalone automated test suite at any time:
 ```bash
-python3 test_toolkit.py
+python3 test_toolkit.py     # or: python3 setup.py test
 ```
 
 ---
@@ -171,7 +193,7 @@ python3 test_toolkit.py
 
 | Issue | Cause | Solution |
 |---|---|---|
-| `sqlite3.OperationalError: unable to open database file` | Directory permissions restricted | VirgoYT v4.0 automatically detects writable paths (`~/phone_tool` or `~/`). Ensure storage permission is granted in Termux (`termux-setup-storage`). |
+| `sqlite3.OperationalError: unable to open database file` | Directory permissions restricted | VirgoYT v4.0 creates `~/phone_tool` on Termux or `~/.local/share/virgoyt` on Linux (override with `VIRGOYT_DATA_DIR`). Ensure storage permission is granted in Termux (`termux-setup-storage`). |
 | `Missing or invalid default region` | Ambiguous national number format | Enter national numbers with international calling code (e.g. `+919876543210`), or supply `IN` or `91` at the region prompt. |
 | `git push failed / authentication error` | GitHub credentials unauthenticated in Termux | Run `gh auth login` or configure SSH keys in Termux. VirgoYT will safely block sync until credentials are authenticated. |
 | `Sync blocked: Sensitive files detected` | Evidence database or export unstaged | VirgoYT auto-protects `.db` and `.csv` files. Run `virgoyt` option `[12]` to audit the `.gitignore` configuration. |

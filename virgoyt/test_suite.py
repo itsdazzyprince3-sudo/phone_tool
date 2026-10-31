@@ -13,7 +13,9 @@ from typing import Dict, Any, List, Tuple
 
 from .config import C, VERSION, AUTHOR
 from .analyzer import analyze_number, resolve_region, generate_osint_formats
+from .recon import run_full_recon
 from .risk import RiskEngine
+from .spiderfoot import SpiderFootEngine
 from .vault import (
     init_db,
     save_case,
@@ -53,7 +55,7 @@ def run_all_tests() -> Dict[str, Any]:
         results.append({"name": name, "passed": passed, "detail": detail})
 
     print(f"\n  {C.R}🎭 VirgoYT v{VERSION} — SELF-TEST VERIFICATION SUITE{C.RST}")
-    print(f"  {C.D}Developer: {AUTHOR} | Target: Android / Termux Python Environment{C.RST}\n")
+    print(f"  {C.D}Developer: {AUTHOR} | Target: Android/Termux + Linux Python Environment{C.RST}\n")
 
     # ── TEST 1: Valid and Invalid Phone Numbers ──
     try:
@@ -184,6 +186,39 @@ def run_all_tests() -> Dict[str, Any]:
             record_test("GitHub Sync Safety & Leak Prevention", t10_ok, "Verified .gitignore rules for *.db, *.csv, and credentials.")
         except Exception as e:
             record_test("GitHub Sync Safety", False, str(e))
+
+        # ── TEST 11: Deep OSINT Recon Engine & Footprint Matrix ──
+        try:
+            analysis_sample = analyze_number(SYNTHETIC_NUMBERS["in_synthetic_mobile"], "IN")
+            recon_res = run_full_recon(analysis_sample)
+            t11_ok = (
+                recon_res.get("total_dorks_count", 0) > 30
+                and recon_res.get("total_platforms_count", 0) > 5
+                and len(recon_res.get("gov_dorks", [])) > 0
+                and len(recon_res.get("email_dorks", [])) > 0
+            )
+            record_test(
+                "Deep OSINT Recon Engine (Dorks, Gov, Email)",
+                t11_ok,
+                f"Generated {recon_res.get('total_dorks_count')} queries & {recon_res.get('total_platforms_count')} platforms."
+            )
+        except Exception as e:
+            record_test("Deep OSINT Recon Engine", False, str(e))
+
+        # ── TEST 12: SpiderFoot Correlation & Target Generation ──
+        try:
+            sf_targets = SpiderFootEngine.generate_targets(analysis_sample)
+            t12_ok = (
+                len(sf_targets.get("SIMULATED_MODULES", [])) >= 6
+                and len(sf_targets.get("CORRELATED_QUERIES", [])) > 0
+            )
+            record_test(
+                "SpiderFoot OSINT Module Matrix",
+                t12_ok,
+                f"Generated {len(sf_targets.get('SIMULATED_MODULES', []))} modules and target correlations."
+            )
+        except Exception as e:
+            record_test("SpiderFoot OSINT Module Matrix", False, str(e))
 
     # Print Report Summary Table
     total = len(results)

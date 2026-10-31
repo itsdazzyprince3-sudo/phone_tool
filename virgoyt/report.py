@@ -1,18 +1,24 @@
 """
 report.py — Intelligence Report Formatter & Presentation Engine
-VirgoYT OSINT Toolkit v4.0
+VirgoYT OSINT Toolkit v5.0
 Developer Credit: VIRGOYT707
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import sqlite3
 from datetime import datetime
 
 from .config import C, MASK, VERSION, AUTHOR
 from .risk import RiskEngine
+from .spiderfoot import SpiderFootEngine
 
-def print_analysis_report(analysis: Dict[str, Any], risk: Dict[str, Any], case_id: str = "") -> None:
-    """Render a comprehensive, privacy-focused intelligence report in terminal."""
+def print_analysis_report(
+    analysis: Dict[str, Any],
+    risk: Dict[str, Any],
+    case_id: str = "",
+    recon: Optional[Dict[str, Any]] = None
+) -> None:
+    """Render a comprehensive intelligence report in terminal with deep OSINT dorks & links."""
     is_valid = analysis.get("is_valid", False)
     is_possible = analysis.get("is_possible", False)
 
@@ -32,7 +38,7 @@ def print_analysis_report(analysis: Dict[str, Any], risk: Dict[str, Any], case_i
 
     print()
     print(f"  {C.R}╔{'═'*64}╗{C.RST}")
-    print(f"  {C.R}║{C.RST} {C.B}{C.W}🎭 VirgoYT OSINT — TELECOM INTELLIGENCE REPORT{C.RST}            {C.R}║{C.RST}")
+    print(f"  {C.R}║{C.RST} {C.B}{C.W}🎭 VirgoYT OSINT — DEEP RECON INTELLIGENCE REPORT (v{VERSION}){C.RST} {C.R}║{C.RST}")
     print(f"  {C.R}╠{'═'*64}╣{C.RST}")
     print(f"  {C.R}║{C.RST}  {C.D}Case ID   : {C.W}{cid_str:<22}{C.RST} {C.D}Timestamp : {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}{C.RST}  {C.R}║{C.RST}")
     print(f"  {C.R}║{C.RST}                                                                {C.R}║{C.RST}")
@@ -49,7 +55,7 @@ def print_analysis_report(analysis: Dict[str, Any], risk: Dict[str, Any], case_i
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} ℹ️  {C.W}Structure Note:{C.RST} {C.D}{analysis.get('possibility_reason')}{C.RST}")
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── TELECOM INTELLIGENCE SECTION ──
+    # ── TELECOM ALLOCATION SECTION ──
     print(f"  {C.R}║{C.RST}  {C.DC}┌── TELECOM ALLOCATION & REGISTRY METADATA ──────────────{C.RST}   {C.R}║{C.RST}")
     cc = analysis.get("country_code", "?")
     rc = analysis.get("region_code", "??")
@@ -63,7 +69,7 @@ def print_analysis_report(analysis: Dict[str, Any], risk: Dict[str, Any], case_i
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 🕐 {C.W}Regulatory TZ :{C.RST} {C.D}{tzs}{C.RST}")
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── RISK ASSESSMENT SECTION ──
+    # ── THREAT ASSESSMENT SECTION ──
     print(f"  {C.R}║{C.RST}  {C.DC}┌── THREAT & ANOMALY ASSESSMENT ─────────────────────────{C.RST}   {C.R}║{C.RST}")
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 🎯 {C.W}Composite Risk:{C.RST} {risk_bar_str}")
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 🛡️  {C.W}Confidence    :{C.RST} {C.W}{confidence}{C.RST}  {C.D}(Evidence Density){C.RST}")
@@ -78,44 +84,88 @@ def print_analysis_report(analysis: Dict[str, Any], risk: Dict[str, Any], case_i
 
     if analysis.get("is_voip"):
         print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} {C.Y}⚠ PRIVACY / DISPOSABLE LINE NOTICE:{C.RST}")
-        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.D}Virtual/VoIP telephony detected. May represent burner apps, SIP trunks, or privacy proxy.{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.D}Virtual/VoIP telephony detected. Likely burner app or SIP proxy.{C.RST}")
 
     print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── OSINT FORMATS SECTION ──
-    fmts = analysis.get("formats", {})
-    if fmts:
-        print(f"  {C.R}║{C.RST}  {C.DC}┌── OSINT QUERY FORMAT VARIATIONS ───────────────────────{C.RST}   {C.R}║{C.RST}")
-        for fname in ["e164", "international", "national", "rfc3966", "raw_intl", "dotted"]:
-            if fname in fmts and fmts[fname]:
-                label = fname.replace("_", " ").upper()
-                print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.D}{label:<14}:{C.RST} {C.CN}{fmts[fname]}{C.RST}")
+    # ── DEEP RECON / ALL FORMATS ──
+    formats = (recon.get("all_formats") if recon else None) or analysis.get("formats", {})
+    if formats:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── NUMBER PERMUTATIONS & BRUTE FORMAT VARIATIONS ───────{C.RST}   {C.R}║{C.RST}")
+        for k, v in formats.items():
+            if v:
+                label = k.replace("_", " ").upper()
+                print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.D}{label:<15}:{C.RST} {C.CN}{v}{C.RST}")
         print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── PLATFORM LOOKUP LINKS ──
-    links = analysis.get("platform_links", {})
+    # ── VERIFIABLE PUBLIC LOOKUP LINKS ──
+    links = (recon.get("platform_links") if recon else None) or analysis.get("platform_links", {})
     if links:
-        print(f"  {C.R}║{C.RST}  {C.DC}┌── VERIFIABLE PUBLIC LOOKUP SHORTCUTS ──────────────────{C.RST}   {C.R}║{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── DIRECT PLATFORM & RECON DIRECTORY SHORTCUTS ─────────{C.RST}   {C.R}║{C.RST}")
         for pname, purl in links.items():
             print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   🔗 {C.W}{pname:<24}:{C.RST} {C.D}{C.BL}{purl}{C.RST}")
         print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── SEARCH DORKS ──
-    dorks = analysis.get("dorks", [])
-    if dorks:
-        print(f"  {C.R}║{C.RST}  {C.DC}┌── RECON SEARCH QUERIES (Manual Google Search) ────────{C.RST}   {C.R}║{C.RST}")
-        for d in dorks[:6]:
-            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.DG}▸{C.RST} {C.D}{d}{C.RST}")
+    # ── EMAIL DISCOVERY SIGNALS ──
+    email_dorks = recon.get("email_dorks", []) if recon else []
+    if email_dorks:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── EMAIL FOOTPRINT DISCOVERY (Linked Accounts / Dumps) ─{C.RST}   {C.R}║{C.RST}")
+        for ed in email_dorks[:8]:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.Y}📧{C.RST} {C.D}{ed}{C.RST}")
         print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
-    # ── LIMITATIONS & ATTRIBUTION ──
-    print(f"  {C.R}║{C.RST}  {C.DC}┌── SOURCE ATTRIBUTION & LEGAL LIMITATIONS ──────────────{C.RST}   {C.R}║{C.RST}")
-    print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 📚 {C.D}Source      : {analysis.get('data_source')}{C.RST}")
-    for disc in analysis.get("disclaimers", []):
-        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} ⚠  {C.D}{disc}{C.RST}")
+    # ── GOV / PUBLIC RECORDS RECON ──
+    gov_dorks = recon.get("gov_dorks", []) if recon else []
+    if gov_dorks:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── PUBLIC & INSTITUTIONAL RECORD FOOTPRINT QUERIES ─────{C.RST}   {C.R}║{C.RST}")
+        for gd in gov_dorks[:8]:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.CN}🏛️{C.RST} {C.D}{gd}{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
+    # ── BREACH / LEAK CORRELATION ──
+    breach_recon = recon.get("breach_recon", []) if recon else []
+    if breach_recon:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── BREACH DUMPS & LEAK ARCHIVE CORRELATION ─────────────{C.RST}   {C.R}║{C.RST}")
+        for br in breach_recon[:6]:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.R}💥{C.RST} {C.D}{br}{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
+
+    # ── ONION / DEEP RECON ──
+    deep_web = recon.get("deep_web_dorks", []) if recon else []
+    if deep_web:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── DARKNET / ONION INDEX FOOTPRINTS (Clearnet Proxies) ──{C.RST}   {C.R}║{C.RST}")
+        for dw in deep_web[:5]:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.M}🧅{C.RST} {C.D}{dw}{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
+
+    # ── SPIDERFOOT OSINT ENGINE INTEGRATION ──
+    sf_targets = SpiderFootEngine.generate_targets(analysis)
+    for sf_line in SpiderFootEngine.format_spiderfoot_summary(sf_targets):
+        print(sf_line)
+
+    # ── COMPREHENSIVE SEARCH DORKS ──
+    dorks = (recon.get("mega_dorks") if recon else None) or analysis.get("dorks", [])
+    if dorks:
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── ADVANCED RECON QUERIES (Social, Job, Web Footprint) ─{C.RST}   {C.R}║{C.RST}")
+        for d in dorks[:15]:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.DG}▸{C.RST} {C.D}{d}{C.RST}")
+        if len(dorks) > 15:
+            print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.Y}... and {len(dorks) - 15} more queries generated.{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
+
+    # ── RECON SUMMARY STATS ──
+    if recon:
+        total_q = recon.get("total_dorks_count", 0)
+        total_p = recon.get("total_platforms_count", 0)
+        print(f"  {C.R}║{C.RST}  {C.DC}┌── RECON METRICS & DENSITY SUMMARY ─────────────────────{C.RST}   {C.R}║{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 📊 {C.W}Total Footprint Queries:{C.RST} {C.G}{total_q}{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 🌐 {C.W}Connected Platforms    :{C.RST} {C.G}{total_p}{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST} 🎯 {C.W}Search Strategy        :{C.RST} {C.CN}Brute-Permutation Dork Matrix{C.RST}")
+        print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
+
+    # ── STATUS FOOTER ──
     print(f"  {C.R}║{C.RST}                                                                {C.R}║{C.RST}")
-    print(f"  {C.R}║{C.RST}  {C.D}VirgoYT v{VERSION}  |  Developer: {AUTHOR}  |  STATUS: PRIVACY-FOCUSED{C.RST}  {C.R}║{C.RST}")
+    print(f"  {C.R}║{C.RST}  {C.D}VirgoYT v{VERSION}  |  Developer: {AUTHOR}  |  STATUS: FULL-SPECTRUM OSINT{C.RST}  {C.R}║{C.RST}")
     print(f"  {C.R}╚{'═'*64}╝{C.RST}\n")
 
 def print_evidence_table(rows: List[sqlite3.Row]) -> None:

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 VirgoYT OSINT Toolkit — Version 4.0
-Telecom Intelligence & Evidence Management Application for Android / Termux
+Telecom Intelligence & Evidence Management Application for Android / Termux and Linux
 
 Developer Credit : VIRGOYT707
-Environment      : Android / Termux
+Environment      : Android / Termux + Linux
 Core Dependencies: phonenumbers, sqlite3
 """
 
@@ -34,6 +34,7 @@ from virgoyt.config import (
     REGION_NAMES,
 )
 from virgoyt.analyzer import analyze_number, resolve_region
+from virgoyt.recon import run_full_recon
 from virgoyt.risk import RiskEngine
 from virgoyt.report import (
     print_analysis_report,
@@ -154,12 +155,15 @@ def handle_analyze(save_mode: bool = False):
     loadbar("EVALUATING NUMBER", 25, 0.4)
     analysis = analyze_number(raw, resolved)
 
+    loadbar("GENERATING FULL-SPECTRUM OSINT RECON", 25, 0.4)
+    recon = run_full_recon(analysis)
+
     platform_context = ""
     if save_mode:
         platform_context = prompt("CONTACT PLATFORM (WhatsApp/SMS/Telegram/Call/Web)")
 
     risk = RiskEngine.evaluate(analysis, platform=platform_context)
-    print_analysis_report(analysis, risk)
+    print_analysis_report(analysis, risk, recon=recon)
 
     if save_mode:
         category = prompt("CATEGORY (Phishing / Scam / Harassment / General) [General]") or "General"

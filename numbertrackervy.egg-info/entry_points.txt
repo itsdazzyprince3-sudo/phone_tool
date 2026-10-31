@@ -1,0 +1,3 @@
+[console_scripts]
+numbertrackervy = phone_tool:main
+virgoyt = phone_tool:main

@@ -1,0 +1,10 @@
+Package: numbertrackervy
+Version: 4.0.0
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.8), python3-phonenumbers
+Maintainer: VIRGOYT707 <virgoyt707@users.noreply.github.com>
+Description: VirgoYT OSINT telecom metadata toolkit
+ Analyze phone numbers against numbering-plan metadata, score risk
+ with transparent signals, and store case evidence in a local SQLite vault.

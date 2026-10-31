@@ -14,34 +14,64 @@ from pathlib import Path
 #  PROJECT METADATA & BRANDING
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-VERSION = "4.0.0"
+VERSION = "5.0.0"
 AUTHOR = "VIRGOYT707"
 PROJECT_NAME = "VirgoYT OSINT Toolkit"
 MASK = "🎭"
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-#  PATHS (TERMUX COMPATIBLE VIA PATHLIB)
+#  PATHS (ANDROID/TERMUX + LINUX COMPATIBLE)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+IS_TERMUX = (
+    bool(os.environ.get("TERMUX_VERSION"))
+    or "com.termux" in sys.prefix
+    or Path("/data/data/com.termux/files/usr").is_dir()
+)
+
+def _make_writable(path: Path):
+    """Create a directory if needed and return it when writable."""
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        if path.is_dir() and os.access(str(path), os.W_OK):
+            return path
+    except Exception:
+        pass
+    return None
+
 def get_writable_base_dir() -> Path:
     """Find a guaranteed writable directory for evidence DB and exports."""
-    candidates = [
-        BASE_DIR,
-        Path.home() / "phone_tool",
-        Path.home(),
-        Path(os.environ.get("HOME", "/data/data/com.termux/files/home")),
-        Path("/data/data/com.termux/files/home"),
-        Path("/tmp"),
-    ]
-    for c in candidates:
-        try:
-            if c.exists() and os.access(str(c), os.W_OK):
-                return c
-        except Exception:
-            continue
-    return BASE_DIR
+    override = os.environ.get("VIRGOYT_DATA_DIR")
+    if override:
+        chosen = _make_writable(Path(override).expanduser())
+        if chosen:
+            return chosen
+
+    if IS_TERMUX:
+        candidates = [
+            Path.home() / "phone_tool",
+            Path.home() / ".local" / "share" / "virgoyt",
+        ]
+    else:
+        xdg = os.environ.get("XDG_DATA_HOME")
+        candidates = [
+            (Path(xdg) / "virgoyt") if xdg else (Path.home() / ".local" / "share" / "virgoyt"),
+            Path.home() / ".virgoyt",
+        ]
+
+    for candidate in candidates:
+        chosen = _make_writable(candidate)
+        if chosen:
+            return chosen
+
+    for fallback in (Path("/tmp/virgoyt"), Path.cwd() / "virgoyt_data"):
+        chosen = _make_writable(fallback)
+        if chosen:
+            return chosen
+
+    return Path.home()
 
 APP_DIR = get_writable_base_dir()
 DB_FILE = APP_DIR / "virgoyt_evidence.db"

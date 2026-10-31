@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: numbertrackervy
+Source: https://github.com/itsdazzyprince3-sudo/phone_tool
+
+Files: *
+Copyright: VIRGOYT707
+License: MIT

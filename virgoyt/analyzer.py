@@ -277,12 +277,7 @@ def analyze_number(raw_number: str, default_region: str = "IN") -> Dict[str, Any
         "national": processed,
         "error": None,
         "data_source": "ITU-T E.164 / Google libphonenumber metadata database",
-        "disclaimers": [
-            "Valid format does NOT guarantee the number is actively assigned or in service.",
-            "Carrier metadata indicates original block allocation, NOT live ported MNP network operator.",
-            "Timezone indicates geographic numbering area, NOT current device or GPS location.",
-            "Real-time interception or live subscriber tracking is technically impossible via phone metadata.",
-        ],
+        "disclaimers": [],
     }
 
     try:
@@ -326,6 +321,7 @@ def analyze_number(raw_number: str, default_region: str = "IN") -> Dict[str, Any
     result["is_voip"] = (nt == PhoneNumberType.VOIP)
 
     # Formats, Dorks, Platform Links
+    result["parsed"] = parsed
     result["formats"] = generate_osint_formats(parsed)
     result["e164"] = result["formats"].get("e164", processed)
     result["international"] = result["formats"].get("international", processed)
