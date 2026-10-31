@@ -32,6 +32,7 @@ from virgoyt.config import (
     sep,
     prompt,
     REGION_NAMES,
+    animate_banner_loop,
 )
 from virgoyt.analyzer import analyze_number, resolve_region
 from virgoyt.recon import run_full_recon
@@ -71,9 +72,7 @@ from virgoyt.test_suite import run_all_tests
 
 def boot_sequence():
     """Display startup diagnostics and mount evidence vault."""
-    os.system("clear 2>/dev/null || cls 2>/dev/null || true")
-    print(BANNER)
-    time.sleep(0.08)
+    animate_banner_loop(cycles=3, delay=0.06)
 
     # Database mount and schema check
     db_ok = init_db()

@@ -1,6 +1,6 @@
 """
 config.py — Configuration, Branding, ANSI Colors & Path Management
-VirgoYT OSINT Toolkit v4.0
+VirgoYT OSINT Toolkit v5.0
 Developer Credit: VIRGOYT707
 """
 
@@ -106,7 +106,7 @@ class C:
 #  ASCII ART & BRANDING BANNER
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-BANNER = f"""{C.Y}{C.B}
+MASK_ART = """
               ⣀⣀⣀⣀⣠⣤⣤⣄⣀⣀⣀⣀
        ⢀⣠⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣄⡀
        ⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷
@@ -121,23 +121,50 @@ BANNER = f"""{C.Y}{C.B}
        ⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⠉⠉⣿⣿⣿⣿⣿⣿⠏
        ⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⠀⠀⣿⣿⣿⣿⠟⠁
        ⠀⠀⠀⠀⠀⠀⠀⠙⠻⢿⣦⣴⡿⠟⠋
-{C.R}
+"""
+
+TITLE_ART = """
  ██╗   ██╗██╗██████╗  ██████╗  ██████╗ ██╗   ██╗████████╗
  ██║   ██║██║██╔══██╗██╔════╝ ██╔═══██╗╚██╗ ██╔╝╚══██╔══╝
  ██║   ██║██║██████╔╝██║  ███╗██║   ██║ ╚████╔╝    ██║   
  ╚██╗ ██╔╝██║██╔══██╗██║   ██║██║   ██║  ╚██╔╝     ██║   
   ╚████╔╝ ██║██║  ██║╚██████╔╝╚██████╔╝   ██║      ██║   
-   ╚═══╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝      ╚═╝{C.RST}
-{C.DC}
-  ╔══════════════════════════════════════════════════════════╗
-  ║  {C.R}{C.B}🎭  VirgoYT — PRIVACY-FOCUSED OSINT ENGINE  🎭{C.RST}{C.DC}         ║
+   ╚═══╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝    ╚═╝      ╚═╝
+"""
+
+BOX_HEADER = f"""
+{C.DC}  ╔══════════════════════════════════════════════════════════╗
+  ║  {C.R}{C.B}🎭  VirgoYT — FULL-SPECTRUM OSINT ENGINE  🎭{C.RST}{C.DC}         ║
   ║  {C.DR}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.DC}  ║
   ║  {C.W}DEVELOPER:{C.RST} {C.R}{C.B}{AUTHOR}{C.RST}{C.DC}                                      ║
   ║  {C.W}VERSION  :{C.RST} {C.Y}v{VERSION} [ARCHITECT BUILD]{C.RST}{C.DC}                   ║
   ║  {C.W}STORAGE  :{C.RST} {C.CN}LOCAL EVIDENCE VAULT (SQLITE){C.RST}{C.DC}                 ║
-  ║  {C.W}STATUS   :{C.RST} {C.G}● ONLINE // PRIVACY-FOCUSED{C.RST}{C.DC}                     ║
+  ║  {C.W}STATUS   :{C.RST} {C.G}● ONLINE // ACTIVE OSINT MATRIX{C.RST}{C.DC}               ║
   ╚══════════════════════════════════════════════════════════╝{C.RST}
 """
+
+BANNER = f"{C.Y}{C.B}{MASK_ART}{C.R}{TITLE_ART}{C.RST}{BOX_HEADER}"
+
+def animate_banner_loop(cycles: int = 4, delay: float = 0.08) -> None:
+    """Animate the mask face, neon glitch, and logo in an electrifying loop."""
+    mask_palettes = [
+        (C.Y + C.B, C.R + C.B),
+        (C.CN + C.B, C.M + C.B),
+        (C.R + C.B, C.Y + C.B),
+        (C.G + C.B, C.CN + C.B),
+    ]
+
+    for cycle in range(cycles):
+        for m_col, t_col in mask_palettes:
+            sys.stdout.write("\033[H\033[J")
+            sys.stdout.write(f"{m_col}{MASK_ART}{C.RST}\n")
+            sys.stdout.write(f"{t_col}{TITLE_ART}{C.RST}\n")
+            sys.stdout.write(f"{BOX_HEADER}\n")
+            sys.stdout.flush()
+            time.sleep(delay)
+
+    sys.stdout.write("\033[H\033[J")
+    print(BANNER)
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  DIAL CODES & REGION LOOKUPS

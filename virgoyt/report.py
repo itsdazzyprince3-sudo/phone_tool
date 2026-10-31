@@ -8,9 +8,43 @@ from typing import Dict, Any, List, Optional
 import sqlite3
 from datetime import datetime
 
-from .config import C, MASK, VERSION, AUTHOR
+from .config import C, MASK, VERSION, AUTHOR, prompt
 from .risk import RiskEngine
 from .spiderfoot import SpiderFootEngine
+
+def show_all_queries_menu(dorks: List[str]) -> None:
+    """Interactively list and page through all generated recon queries."""
+    if not dorks:
+        return
+
+    print()
+    print(f"  {C.R}╔{'═'*64}╗{C.RST}")
+    print(f"  {C.R}║{C.RST} {C.B}{C.W}🎭 FULL RECONNAISSANCE QUERY MATRIX ({len(dorks)} TOTAL){C.RST}        {C.R}║{C.RST}")
+    print(f"  {C.R}╠{'═'*64}╣{C.RST}")
+    
+    page_size = 25
+    total_pages = (len(dorks) + page_size - 1) // page_size
+    current_page = 0
+
+    while True:
+        start_idx = current_page * page_size
+        end_idx = min(start_idx + page_size, len(dorks))
+        
+        print(f"  {C.R}║{C.RST} {C.CN}── Page {current_page + 1}/{total_pages} (Items {start_idx + 1}-{end_idx}) ──────────────────{C.RST}")
+        for i in range(start_idx, end_idx):
+            print(f"  {C.R}║{C.RST}  {C.DG}[{i+1:03d}]{C.RST} {C.W}{dorks[i]}{C.RST}")
+        
+        print(f"  {C.R}╚{'═'*64}╝{C.RST}")
+        print()
+        
+        if current_page < total_pages - 1:
+            cmd = prompt(f"Press [ENTER] for next page, or enter 'q' to return to menu")
+            if cmd.lower() == 'q':
+                break
+            current_page += 1
+        else:
+            prompt("End of queries list. Press [ENTER] to return to menu")
+            break
 
 def print_analysis_report(
     analysis: Dict[str, Any],
@@ -145,11 +179,13 @@ def print_analysis_report(
 
     # ── COMPREHENSIVE SEARCH DORKS ──
     dorks = (recon.get("mega_dorks") if recon else None) or analysis.get("dorks", [])
+    has_more_dorks = False
     if dorks:
         print(f"  {C.R}║{C.RST}  {C.DC}┌── ADVANCED RECON QUERIES (Social, Job, Web Footprint) ─{C.RST}   {C.R}║{C.RST}")
         for d in dorks[:15]:
             print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.DG}▸{C.RST} {C.D}{d}{C.RST}")
         if len(dorks) > 15:
+            has_more_dorks = True
             print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}   {C.Y}... and {len(dorks) - 15} more queries generated.{C.RST}")
         print(f"  {C.R}║{C.RST}  {C.DC}│{C.RST}")
 
@@ -167,6 +203,11 @@ def print_analysis_report(
     print(f"  {C.R}║{C.RST}                                                                {C.R}║{C.RST}")
     print(f"  {C.R}║{C.RST}  {C.D}VirgoYT v{VERSION}  |  Developer: {AUTHOR}  |  STATUS: FULL-SPECTRUM OSINT{C.RST}  {C.R}║{C.RST}")
     print(f"  {C.R}╚{'═'*64}╝{C.RST}\n")
+
+    if has_more_dorks:
+        view_more = prompt(f"VIEW ALL {len(dorks)} RECON QUERIES? (y/n) [n]").strip().lower()
+        if view_more in ("y", "yes"):
+            show_all_queries_menu(dorks)
 
 def print_evidence_table(rows: List[sqlite3.Row]) -> None:
     """Print an aligned ASCII evidence vault summary table."""
