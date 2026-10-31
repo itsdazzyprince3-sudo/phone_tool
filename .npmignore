@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+backups/
+exports/
+*.db
+*.csv
+.env

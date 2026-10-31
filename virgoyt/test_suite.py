@@ -4,6 +4,8 @@ VirgoYT OSINT Toolkit v4.0
 Developer Credit: VIRGOYT707
 """
 
+import socket
+import struct
 import sys
 import tempfile
 import sqlite3
@@ -16,6 +18,14 @@ from .analyzer import analyze_number, resolve_region, generate_osint_formats
 from .recon import run_full_recon
 from .risk import RiskEngine
 from .spiderfoot import SpiderFootEngine
+from .device_audit import evaluate_evidence
+from .detection import (
+    parse_package_dump,
+    score_package,
+    detect_periodic,
+    read_pcap,
+    analyze_traffic,
+)
 from .vault import (
     init_db,
     save_case,
@@ -219,6 +229,138 @@ def run_all_tests() -> Dict[str, Any]:
             )
         except Exception as e:
             record_test("SpiderFoot OSINT Module Matrix", False, str(e))
+
+        # ── TEST 13: Non-CVE Device Weakness Evaluation ──
+        try:
+            synthetic_evidence = {
+                "props": {
+                    "ro.adb.secure": "0",
+                    "ro.build.type": "userdebug",
+                    "ro.debuggable": "1",
+                    "ro.boot.verifiedbootstate": "orange",
+                    "ro.boot.veritymode": "disabled",
+                    "ro.build.tags": "test-keys",
+                    "ro.crypto.state": "unencrypted",
+                    "ro.crypto.type": "",
+                },
+                "settings": {
+                    "global.adb_enabled": "1",
+                    "global.adb_wifi_enabled": "0",
+                    "global.development_settings_enabled": "1",
+                    "global.install_non_market_apps": "1",
+                    "global.package_verifier_enable": "0",
+                    "global.verifier_verify_adb_installs": "0",
+                    "secure.install_non_market_apps": "",
+                    "secure.lockscreen.disabled": "1",
+                    "secure.enabled_accessibility_services": "",
+                },
+                "probes": {
+                    "su_files": "/system/xbin/su",
+                    "su_which": "/system/xbin/su",
+                    "debuggable": "Package [com.demo] flags=DEBUGGABLE",
+                    "providers": "",
+                    "user_ca": "",
+                    "device_policy": "",
+                    "lock_state": "",
+                    "backup": "Backup Manager is enabled",
+                },
+            }
+            device_findings = evaluate_evidence(synthetic_evidence)
+            exposed_names = {f["check"] for f in device_findings if f["status"] == "EXPOSED"}
+            required = {
+                "USB debugging (ADB)",
+                "Debug build / debuggable system",
+                "Root / su binaries",
+                "Sideloading (unknown sources)",
+                "Storage encryption",
+            }
+            t13_ok = required.issubset(exposed_names) and len(device_findings) >= 14
+            record_test(
+                "Non-CVE Device Weakness Engine",
+                t13_ok,
+                f"Evaluated {len(device_findings)} checks, detected {len(exposed_names)} exposed signals."
+            )
+        except Exception as e:
+            record_test("Non-CVE Device Weakness Engine", False, str(e))
+
+        # ── TEST 14: Spyware Scoring & Traffic Anomaly Engine ──
+        try:
+            dump = """
+  Package [com.spy.example] (abc):
+    versionName=3.1
+    installerPackageName=
+    flags=[ HAS_CODE ]
+    requested permissions:
+      android.permission.READ_SMS
+      android.permission.RECEIVE_SMS
+      android.permission.READ_CONTACTS
+      android.permission.CAMERA
+      android.permission.ACCESS_FINE_LOCATION
+    install permissions:
+      android.permission.INTERNET
+  Package [com.chat.app] (def):
+    versionName=2.0
+    installerPackageName=com.android.vending
+    flags=[ HAS_CODE ]
+    requested permissions:
+      android.permission.READ_CONTACTS
+      android.permission.RECORD_AUDIO
+      android.permission.CAMERA
+"""
+            parsed = parse_package_dump(dump)
+            spy_score = score_package(parsed["com.spy.example"])
+            chat_score = score_package(parsed["com.chat.app"])
+
+            regular = detect_periodic([i * 30 for i in range(10)])
+            irregular = detect_periodic([1, 4, 19, 55, 120, 300, 301, 900, 2000])
+
+            def eth_udp_dns(qname: str, ts: float) -> bytes:
+                dns = struct.pack("!HHHHHH", 0x1234, 0x0100, 1, 0, 0, 0)
+                for label in qname.split("."):
+                    dns += bytes([len(label)]) + label.encode()
+                dns += b"\x00" + struct.pack("!HH", 1, 1)
+                udp = struct.pack("!HHHH", 5353, 53, 8 + len(dns), 0) + dns
+                ip = struct.pack(
+                    "!BBHHHBBH4s4s", 0x45, 0, 20 + len(udp), 0, 0, 64, 17, 0,
+                    socket.inet_aton("192.168.1.10"), socket.inet_aton("9.9.9.9")
+                ) + udp
+                frame = b"\x00" * 12 + struct.pack("!H", 0x0800) + ip
+                return struct.pack("<IIII", int(ts), int((ts % 1) * 1e6), len(frame), len(frame)) + frame
+
+            def eth_tcp_syn(dst: str, port: int, ts: float) -> bytes:
+                tcp = struct.pack("!HHIIBBHHH", 40000, port, 0, 0, 0x50, 0x02, 8192, 0, 0)
+                ip = struct.pack(
+                    "!BBHHHBBH4s4s", 0x45, 0, 20 + len(tcp), 0, 0, 64, 6, 0,
+                    socket.inet_aton("192.168.1.10"), socket.inet_aton(dst)
+                ) + tcp
+                frame = b"\x00" * 12 + struct.pack("!H", 0x0800) + ip
+                return struct.pack("<IIII", int(ts), int((ts % 1) * 1e6), len(frame), len(frame)) + frame
+
+            capture = struct.pack("<IHHIIII", 0xA1B2C3D4, 2, 4, 0, 0, 65535, 1)
+            capture += eth_udp_dns("aGVsbG8xMjM0NTY3ODkwYWJjZGVmLmV2aWwuY29t", 1000.0)
+            for i in range(10):
+                capture += eth_tcp_syn("203.0.113.9", 8443, 2000 + i * 30)
+            capture_path = Path(tmp_dir) / "synthetic.pcap"
+            capture_path.write_bytes(capture)
+
+            traffic = analyze_traffic(read_pcap(capture_path))
+            t14_ok = (
+                spy_score["level"] == "HIGH"
+                and spy_score["score"] >= 12
+                and chat_score["level"] != "HIGH"
+                and regular is not None
+                and irregular is None
+                and len(traffic["beacons"]) >= 1
+                and len(traffic["suspect_dns_labels"]) >= 1
+            )
+            record_test(
+                "Spyware Scoring & Traffic Anomaly Engine",
+                t14_ok,
+                f"Spy package {spy_score['score']} ({spy_score['level']}), "
+                f"{len(traffic['beacons'])} beacon(s), {traffic['packets']} packets parsed."
+            )
+        except Exception as e:
+            record_test("Spyware Scoring & Traffic Anomaly Engine", False, str(e))
 
     # Print Report Summary Table
     total = len(results)

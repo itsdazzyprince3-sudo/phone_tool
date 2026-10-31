@@ -1,0 +1,35 @@
+{
+  "name": "numbertrackervy",
+  "version": "5.0.0",
+  "description": "VirgoYT OSINT Toolkit \u2014 phone metadata analysis, evidence vault, Android device audit, and monitoring detection",
+  "keywords": [
+    "osint",
+    "phone",
+    "telecom",
+    "android",
+    "forensics",
+    "security"
+  ],
+  "author": "VIRGOYT707",
+  "license": "MIT",
+  "bin": {
+    "numbertrackervy": "bin/numbertrackervy.js"
+  },
+  "files": [
+    "bin/",
+    "phone_tool.py",
+    "virgoyt/",
+    "test_toolkit.py",
+    "requirements.txt",
+    "README.md",
+    "!**/__pycache__/**",
+    "!**/*.pyc"
+  ],
+  "scripts": {
+    "postinstall": "node bin/postinstall.js",
+    "test": "python3 test_toolkit.py"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

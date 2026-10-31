@@ -64,6 +64,8 @@ from virgoyt.git_sync import (
     get_remote_info,
 )
 from virgoyt.test_suite import run_all_tests
+from virgoyt.device_audit import run_device_audit
+from virgoyt.detection import run_detection_console
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -130,6 +132,8 @@ def show_main_menu():
     print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}10{C.R}]{C.RST} ♻️  {C.W}Restore Database from Backup{C.RST}                 {C.DR}║{C.RST}")
     print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}11{C.R}]{C.RST} 🧪 {C.W}Run System Self-Test Suite{C.RST}                   {C.DR}║{C.RST}")
     print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}12{C.R}]{C.RST} 🔄 {C.W}GitHub Sync & Leak-Prevention Audit{C.RST}          {C.DR}║{C.RST}")
+    print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}13{C.R}]{C.RST} 📱 {C.W}Device Audit & ADB Extraction{C.RST}                 {C.DR}║{C.RST}")
+    print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}14{C.R}]{C.RST} 🕵️  {C.W}Monitoring & Traffic Detection{C.RST}               {C.DR}║{C.RST}")
     print(f"  {C.DR}║{C.RST}  {C.R}[{C.W}0{C.R}]{C.RST}  ⚡ {C.R}Exit Toolkit{C.RST}                                    {C.DR}║{C.RST}")
     print(f"  {C.DR}║{C.RST}                                                        {C.DR}║{C.RST}")
     print(f"  {C.DR}╚{'═'*56}╝{C.RST}")
@@ -400,10 +404,14 @@ def main():
                 run_all_tests()
             elif choice == "12":
                 handle_github_sync()
+            elif choice == "13":
+                run_device_audit()
+            elif choice == "14":
+                run_detection_console()
             elif choice == "0":
                 shutdown()
             else:
-                print(f"  {C.R}❌ Invalid selection. Please enter 0-12.{C.RST}")
+                print(f"  {C.R}❌ Invalid selection. Please enter 0-14.{C.RST}")
 
         except KeyboardInterrupt:
             print("\n")
