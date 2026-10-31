@@ -1,14 +1,42 @@
-# SQLite databases (keep personal evidence vault local)
-*.db
-*.sqlite3
+# VirgoYT OSINT Toolkit v4.0 .gitignore
+# Developer Credit: VIRGOYT707
+# Guaranteed Data Protection & Leak Prevention
 
-# CSV Exports
+# SQLite databases & journals (Local Evidence Vault)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.bak
+
+# Case Data & Evidence Backups
+backups/
+exports/
+*.csv
+*.tsv
 evidence_export_*.csv
 virgoyt_evidence_*.csv
 
-# Python cache
+# Sensitive environment files & tokens
+.env
+*.env
+*.key
+*.pem
+*.token
+*credentials*
+id_rsa
+id_ed25519
+
+# Python bytecode & caching
 __pycache__/
 *.py[cod]
 *$py.class
-.env
-.venv
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+wheels/

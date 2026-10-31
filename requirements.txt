@@ -1,1 +1,1 @@
-phonenumbers
+phonenumbers>=8.12.0
